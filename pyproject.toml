@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video_converter"
+version = "1.0.0"
+authors = [
+    {name = "Gordon Gauer", email = "proton@gmail.com"},
+]
+description = "视频格式转换工具，提供命令行操作与HTML界面模板"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Multimedia :: Video :: Conversion",
+]
+dependencies = [
+    "tqdm>=4.64.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.22.0",
+    "python-multipart>=0.0.6",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Proton1917/video-format-converter"
+"Bug Tracker" = "https://github.com/Proton1917/video-format-converter/issues"
+
+[project.scripts]
+video-converter = "video_converter.__main__:main"
+video-converter-serve = "serve_app:main"

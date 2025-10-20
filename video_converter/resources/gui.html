@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>视频格式转换工具</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            --bg: #0f172a;
+            --bg-alt: #1e293b;
+            --panel: #0f172a;
+            --accent: #3b82f6;
+            --accent-strong: #2563eb;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --success: #22c55e;
+            --warning: #facc15;
+            --danger: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header, footer {
+            padding: 24px 32px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        footer {
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            border-bottom: none;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: auto;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header p {
+            margin: 12px 0 0;
+            color: var(--muted);
+        }
+
+        main {
+            width: min(1100px, 92vw);
+            margin: 40px auto 64px;
+            display: grid;
+            gap: 24px;
+        }
+
+        section {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.06);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 28px 30px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
+        }
+
+        h2 {
+            margin: 0 0 18px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-panel {
+            display: grid;
+            gap: 24px;
+        }
+
+        .dropzone {
+            border: 2px dashed rgba(59, 130, 246, 0.35);
+            border-radius: 18px;
+            padding: 48px 32px;
+            text-align: center;
+            background: rgba(30, 41, 59, 0.6);
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropzone.dragover {
+            border-color: var(--accent);
+            background: rgba(37, 99, 235, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .dropzone h3 {
+            margin: 0 0 10px;
+            font-size: 22px;
+        }
+
+        .dropzone p {
+            margin: 6px auto;
+            max-width: 380px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .dropzone button {
+            margin-top: 14px;
+            padding: 10px 22px;
+            border-radius: 999px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .dropzone button:hover {
+            background: var(--accent-strong);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        .option-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 16px 18px;
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        select, input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+            font-size: 15px;
+            transition: border 0.2s ease, background 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.65);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .checkbox-group input {
+            width: auto;
+            transform: scale(1.1);
+        }
+
+        .primary-btn {
+            justify-self: flex-start;
+            padding: 12px 38px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .primary-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .secondary-btn {
+            padding: 11px 26px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: transparent;
+            color: var(--muted);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border 0.2s ease, color 0.2s ease;
+        }
+
+        .secondary-btn:hover {
+            color: var(--text);
+            border-color: rgba(148, 163, 184, 0.65);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        thead th {
+            color: var(--muted);
+            font-weight: 500;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(37, 99, 235, 0.08);
+        }
+
+        .filename {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status.pending { background: rgba(148, 163, 184, 0.25); color: var(--muted); }
+        .status.processing { background: rgba(96, 165, 250, 0.25); color: #60a5fa; }
+        .status.success { background: rgba(34, 197, 94, 0.25); color: var(--success); }
+        .status.failed { background: rgba(248, 113, 113, 0.25); color: #fca5a5; }
+
+        progress {
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+        }
+
+        progress::-webkit-progress-bar {
+            background: transparent;
+        }
+
+        progress::-webkit-progress-value {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+            border-radius: 999px;
+        }
+
+        progress::-moz-progress-bar {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+            border-radius: 999px;
+        }
+
+        .log-panel {
+            max-height: 220px;
+            overflow: auto;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.08);
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .log-line {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .log-line.success { color: var(--success); }
+        .log-line.error { color: #f87171; }
+        .log-line.info { color: #60a5fa; }
+
+        .empty-state {
+            padding: 38px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .empty-state strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: var(--text);
+        }
+
+        .hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px dashed rgba(148, 163, 184, 0.25);
+            color: var(--muted);
+        }
+
+        @media (max-width: 768px) {
+            header, footer { padding: 18px; }
+            header h1 { font-size: 22px; }
+            main { margin: 28px auto 48px; }
+            section { padding: 22px; }
+            .dropzone { padding: 36px 18px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>
+            <span>🎬</span>
+            视频格式转换工具
+        </h1>
+        <p>通过内置启动脚本运行时，页面会自动连接本地后端 API，实现批量视频转码、进度追踪与日志反馈。</p>
+    </header>
+
+    <main>
+        <section class="upload-panel">
+            <div class="dropzone" id="dropzone">
+                <h3>拖拽视频到这里，或点击选择文件</h3>
+                <p>支持一次选择多个文件，也可以拖入文件夹（浏览器会自动展开其中的文件）。</p>
+                <button type="button" id="pickFilesBtn">选择文件</button>
+                <input type="file" id="fileInput" hidden multiple accept="video/*">
+            </div>
+
+            <div class="options-grid">
+                <div class="option-card">
+                    <div>
+                        <label for="formatSelect">目标格式</label>
+                        <select id="formatSelect">
+                            <option value="" disabled selected>加载中...</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="parallelCheckbox" checked>
+                        <label for="parallelCheckbox">启用并行转换</label>
+                    </div>
+                    <div>
+                        <label for="workerInput">最大线程数</label>
+                        <input type="number" id="workerInput" min="1" max="16" value="4">
+                    </div>
+                </div>
+
+                <div class="option-card">
+                    <label for="outputFolder">输出目录 (可选)</label>
+                    <input type="text" id="outputFolder" placeholder="示例：/Users/me/Videos/output">
+                    <span class="hint">配合后端使用时，可忽略此项或改为服务器存储路径</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="primary-btn" id="convertBtn" disabled>开始转换</button>
+                <button class="secondary-btn" id="clearQueueBtn" type="button">清空队列</button>
+            </div>
+        </section>
+
+        <section>
+            <h2>转换队列</h2>
+            <div class="queue-panel" id="queuePanel">
+                <div class="empty-state" id="emptyQueueHint">
+                    <strong>队列为空</strong>
+                    拖拽或选择视频后即可看到任务列表、进度条和状态信息。
+                </div>
+                <table id="queueTable" hidden>
+                    <thead>
+                        <tr>
+                            <th style="width:32%">文件名</th>
+                            <th style="width:18%">源格式</th>
+                            <th style="width:18%">目标格式</th>
+                            <th style="width:18%">进度</th>
+                            <th style="width:14%">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>操作日志</h2>
+            <div class="log-panel" id="logPanel">
+                <p class="log-line info">[提示] 点击“开始转换”后，前端会上传文件到本地后端并在此同步显示处理结果。</p>
+                <p class="log-line">如需部署到远程服务器，可直接复用本项目提供的 FastAPI 服务或自行对接其他后端。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        通过运行 <code>python serve_app.py</code> 自动启动本地 FastAPI 服务并打开此页面，可根据需要扩展为远程部署或接入其他任务队列。
+    </footer>
+
+    <template id="queueRowTemplate">
+        <tr>
+            <td class="filename"></td>
+            <td class="source"></td>
+            <td class="target"></td>
+            <td>
+                <progress max="100" value="0"></progress>
+            </td>
+            <td>
+                <span class="status pending">待处理</span>
+            </td>
+        </tr>
+    </template>
+
+    <script>
+        const logPanel = document.getElementById("logPanel");
+        const dropzone = document.getElementById("dropzone");
+        const fileInput = document.getElementById("fileInput");
+        const pickFilesBtn = document.getElementById("pickFilesBtn");
+        const queueTable = document.getElementById("queueTable");
+        const queueBody = queueTable.querySelector("tbody");
+        const emptyQueueHint = document.getElementById("emptyQueueHint");
+        const convertBtn = document.getElementById("convertBtn");
+        const clearBtn = document.getElementById("clearQueueBtn");
+        const formatSelect = document.getElementById("formatSelect");
+        const workerInput = document.getElementById("workerInput");
+        const parallelCheckbox = document.getElementById("parallelCheckbox");
+        const outputFolderInput = document.getElementById("outputFolder");
+        const template = document.getElementById("queueRowTemplate");
+
+        const state = {
+            files: [],
+            running: false,
+        };
+
+        const formatFromName = (name) => {
+            const match = name.split(".").pop();
+            return match ? match.toUpperCase() : "未知";
+        };
+
+        const log = (message, level = "info") => {
+            const line = document.createElement("p");
+            line.className = `log-line ${level}`;
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            logPanel.appendChild(line);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        };
+
+        const renderQueue = () => {
+            queueBody.innerHTML = "";
+            state.files.forEach((item) => queueBody.appendChild(item.row));
+            const hasItems = state.files.length > 0;
+            queueTable.hidden = !hasItems;
+            emptyQueueHint.hidden = hasItems;
+            convertBtn.disabled = !hasItems || state.running;
+        };
+
+        const addFiles = (fileList) => {
+            Array.from(fileList).forEach((file) => {
+                const row = template.content.firstElementChild.cloneNode(true);
+                const entry = {
+                    file,
+                    status: "pending",
+                    row,
+                    elements: {
+                        filename: row.querySelector(".filename"),
+                        source: row.querySelector(".source"),
+                        target: row.querySelector(".target"),
+                        progressBar: row.querySelector("progress"),
+                        status: row.querySelector(".status"),
+                    },
+                };
+
+                entry.elements.filename.textContent = file.name;
+                entry.elements.source.textContent = formatFromName(file.name);
+                entry.elements.target.textContent = (formatSelect.value || "mp4").toUpperCase();
+                entry.elements.progressBar.value = 0;
+                entry.elements.status.textContent = "待处理";
+                entry.elements.status.className = "status pending";
+
+                state.files.push(entry);
+                log(`已加入队列：${file.name}`, "info");
+            });
+
+            renderQueue();
+        };
+
+        const attachFileEvents = () => {
+            dropzone.addEventListener("click", () => fileInput.click());
+            pickFilesBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                fileInput.click();
+            });
+
+            fileInput.addEventListener("change", (event) => {
+                if (event.target.files.length) {
+                    addFiles(event.target.files);
+                    fileInput.value = "";
+                }
+            });
+
+            dropzone.addEventListener("dragover", (event) => {
+                event.preventDefault();
+                dropzone.classList.add("dragover");
+            });
+
+            dropzone.addEventListener("dragleave", () => {
+                dropzone.classList.remove("dragover");
+            });
+
+            dropzone.addEventListener("drop", (event) => {
+                event.preventDefault();
+                dropzone.classList.remove("dragover");
+                if (event.dataTransfer.files.length) {
+                    addFiles(event.dataTransfer.files);
+                }
+            });
+        };
+
+        const fetchFormats = async () => {
+            try {
+                const response = await fetch("/api/formats");
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                formatSelect.innerHTML = "";
+                data.formats.forEach((fmt) => {
+                    const option = document.createElement("option");
+                    option.value = fmt;
+                    option.textContent = fmt.toUpperCase();
+                    formatSelect.appendChild(option);
+                });
+                formatSelect.value = data.default || "mp4";
+                log("已获取后端支持的格式列表。", "info");
+            } catch (error) {
+                log(`获取格式列表失败：${error}`, "error");
+                formatSelect.innerHTML = "";
+                ["mp4", "mkv", "avi"].forEach((fmt, index) => {
+                    const option = document.createElement("option");
+                    option.value = fmt;
+                    option.textContent = fmt.toUpperCase();
+                    if (index === 0) option.selected = true;
+                    formatSelect.appendChild(option);
+                });
+            }
+        };
+
+        const updatePendingTargets = () => {
+            state.files.forEach((item) => {
+                if (item.status === "pending") {
+                    item.elements.target.textContent = formatSelect.value.toUpperCase();
+                }
+            });
+        };
+
+        const parseFilenameFromResponse = (response, fallback) => {
+            const disposition = response.headers.get("Content-Disposition");
+            if (disposition) {
+                const match = disposition.match(/filename\*=UTF-8''(.+)$|filename="?([^"]+)"?/i);
+                if (match) {
+                    return decodeURIComponent(match[1] || match[2]);
+                }
+            }
+            return fallback;
+        };
+
+        const autoDownload = (blob, filename) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            requestAnimationFrame(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            });
+        };
+
+        const convertQueue = async () => {
+            if (state.running || state.files.length === 0) return;
+            state.running = true;
+            convertBtn.disabled = true;
+
+            const targetFormat = formatSelect.value;
+            const maxWorkers = Number(workerInput.value) || 4;
+            const useParallel = parallelCheckbox.checked;
+            const outputFolder = outputFolderInput.value.trim();
+
+            log(`开始转换，共 ${state.files.length} 个文件。目标格式：${targetFormat}。`, "info");
+
+            for (const item of state.files) {
+                item.status = "processing";
+                item.elements.status.textContent = "上传中...";
+                item.elements.status.className = "status processing";
+                item.elements.progressBar.value = 10;
+
+                const formData = new FormData();
+                formData.append("file", item.file);
+                formData.append("target_format", targetFormat);
+                formData.append("max_workers", maxWorkers);
+                formData.append("use_parallel", useParallel ? "true" : "false");
+                if (outputFolder) {
+                    formData.append("output_folder", outputFolder);
+                }
+
+                try {
+                    const response = await fetch("/api/convert", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        const message = await response.text();
+                        throw new Error(message || "服务返回错误");
+                    }
+
+                    item.elements.status.textContent = "转换中...";
+                    item.elements.progressBar.value = 75;
+
+                    const blob = await response.blob();
+                    const inferredName = `${item.file.name.replace(/\.[^.]+$/, "")}.${targetFormat}`;
+                    const filename = parseFilenameFromResponse(response, inferredName);
+
+                    autoDownload(blob, filename);
+
+                    item.status = "success";
+                    item.elements.status.textContent = "完成";
+                    item.elements.status.className = "status success";
+                    item.elements.progressBar.value = 100;
+                    log(`✅ 转换完成：${item.file.name} → ${filename}`, "success");
+                } catch (error) {
+                    item.status = "failed";
+                    item.elements.status.textContent = "失败";
+                    item.elements.status.className = "status failed";
+                    item.elements.progressBar.value = 100;
+                    log(`⚠️ 转换失败：${item.file.name}（${error}）`, "error");
+                }
+            }
+
+            state.running = false;
+            convertBtn.disabled = state.files.length === 0;
+            log("全部任务完成。", "info");
+        };
+
+        const resetQueue = () => {
+            state.files = [];
+            renderQueue();
+            log("已清空队列。", "info");
+        };
+
+        convertBtn.addEventListener("click", convertQueue);
+        clearBtn.addEventListener("click", resetQueue);
+        formatSelect.addEventListener("change", updatePendingTargets);
+
+        attachFileEvents();
+        fetchFormats();
+        renderQueue();
+    </script>
+</body>
+</html>
